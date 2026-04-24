@@ -1,0 +1,36 @@
+# Batch Operations
+
+*Insert or delete large datasets with minimal round-trips.*
+
+## CreateBatch
+
+```go
+users := []User{
+    {Name: "Alice", Email: "alice@example.com"},
+    {Name: "Bob",   Email: "bob@example.com"},
+    // ... thousands more
+}
+
+// 100 records per round-trip
+err := db.CreateBatch(ctx, &users, 100)
+```
+
+Tune the batch size to your database's limits (e.g. MySQL `max_allowed_packet`).
+
+## DeleteBatch
+
+```go
+ids := []any{1, 2, 3, 4, 5}
+
+// delete in batches of 500
+err := db.DeleteBatch(ctx, &User{}, ids, 500)
+```
+
+## Error Handling
+
+```go
+err := db.CreateBatch(ctx, &[]User{}, 100)
+if errors.Is(err, gormicx.ErrEmptyBatch) {
+    // empty slice — nothing to insert
+}
+```

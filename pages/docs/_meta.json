@@ -1,0 +1,14 @@
+{
+  "getting-started": "Getting Started",
+  "models": "Models",
+  "query-builder": "Query Builder",
+  "crud": "CRUD",
+  "transactions": "Transactions",
+  "batch-operations": "Batch Operations",
+  "hooks": "Hooks",
+  "schema-migration": "Schema Migration",
+  "connection-config": "Connection & Config",
+  "drivers": "Drivers",
+  "logging": "Logging",
+  "error-reference": "Error Reference"
+}

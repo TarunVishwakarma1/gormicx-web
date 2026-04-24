@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg:      #0a0a0a;
+  --color-surface: #0f0f0f;
+  --color-border:  #1a1a1a;
+  --color-amber:   #f59e0b;
+  --color-text:    #ffffff;
+  --color-muted:   #888888;
+  --color-dim:     #555555;
+}
+
+/* Force dark bg on Nextra shell */
+html,
+body,
+.nextra-nav-container,
+.nextra-sidebar-container,
+.nextra-content {
+  background-color: var(--color-bg) !important;
+}
+
+/* Sidebar border */
+.nextra-sidebar-container {
+  border-right: 1px solid var(--color-border) !important;
+}
+
+/* Inactive sidebar links */
+.nextra-sidebar-container a {
+  color: var(--color-muted) !important;
+}
+.nextra-sidebar-container a:hover {
+  color: var(--color-text) !important;
+}
+
+/* Active sidebar item */
+.nextra-sidebar-container li a[aria-current='true'] {
+  color: #fff !important;
+  background: #111 !important;
+  border-left: 2px solid var(--color-amber);
+}
+
+/* Code blocks */
+.nextra-code-block pre {
+  background: #111 !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* Thin scrollbar */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: var(--color-bg); }
+::-webkit-scrollbar-thumb  { background: #333; border-radius: 2px; }
+
+/* Custom cursor — hide default on all elements */
+* {
+  cursor: none !important;
+}
+
+/* Headline word reveal */
+@keyframes wordReveal {
+  from { transform: translateY(110%); }
+  to   { transform: translateY(0); }
+}
+
+/* Ambient glow pulse */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.12; }
+  50%       { opacity: 0.22; }
+}
+
+/* Fade-in for non-numeric stats (∞, MIT) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

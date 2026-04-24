@@ -1,0 +1,176 @@
+# Getting Started
+
+*Install gormicx, connect to a database, define a model, and run your first queries in minutes.*
+
+## Installation
+
+Install the core library:
+
+```bash
+go get github.com/tarunvishwakarma1/gormicx
+```
+
+Then install the driver for your database:
+
+```bash
+# PostgreSQL / CockroachDB
+go get github.com/jackc/pgx/v5
+
+# MySQL / MariaDB
+go get github.com/go-sql-driver/mysql
+
+# MongoDB
+go get go.mongodb.org/mongo-driver/mongo
+
+# Cassandra
+go get github.com/gocql/gocql
+
+# Snowflake
+go get github.com/snowflakedb/gosnowflake
+```
+
+## 1. Import the library and a driver
+
+```go
+import (
+    "github.com/tarunvishwakarma1/gormicx"
+    _ "github.com/tarunvishwakarma1/gormicx/drivers/postgres" // blank import registers driver
+)
+```
+
+The blank import (`_`) triggers the driver's `init()` which registers it under its name. No explicit setup needed.
+
+## 2. Open a connection
+
+```go
+db, err := gormicx.Open("postgres", "postgres://user:password@localhost:5432/mydb",
+    gormicx.WithMaxOpenConns(25),
+    gormicx.WithMaxIdleConns(10),
+    gormicx.WithLogLevel(logger.Info),
+)
+if err != nil {
+    log.Fatal(err)
+}
+defer db.Close()
+```
+
+## 3. Define a model
+
+```go
+type User struct {
+    gormicx.Model                                    // Embeds ID, CreatedAt, UpdatedAt, DeletedAt
+    Name     string `gx:"column:name;index"`
+    Email    string `gx:"column:email;unique;not_null;size:255"`
+    Age      int    `gx:"column:age"`
+    Role     string `gx:"column:role;size:50;default"`
+}
+```
+
+## 4. Migrate schema
+
+```go
+if err := db.AutoMigrate(ctx, &User{}); err != nil {
+    log.Fatal(err)
+}
+```
+
+## 5. CRUD
+
+```go
+ctx := context.Background()
+
+// Create
+user := &User{Name: "Alice", Email: "alice@example.com", Age: 30}
+if err := db.Create(ctx, user); err != nil {
+    log.Fatal(err)
+}
+
+// Find many
+var users []User
+err = db.Find(ctx, &User{}).
+    Where(clause.Gt("age", 18)).
+    OrderBy(clause.AscCol("name")).
+    Limit(20).
+    Offset(0).
+    Find(&users)
+
+// Find one
+var u User
+err = db.Find(ctx, &User{}).
+    Where(clause.Eq("email", "alice@example.com")).
+    First(&u)
+
+// Update
+n, err := db.Find(ctx, &User{}).
+    Where(clause.Eq("id", user.ID)).
+    Set(map[string]any{"name": "Alice Smith", "age": 31})
+
+// Delete
+n, err = db.Find(ctx, &User{}).
+    Where(clause.Eq("id", user.ID)).
+    Delete()
+```
+
+## Full Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    "github.com/tarunvishwakarma1/gormicx"
+    "github.com/tarunvishwakarma1/gormicx/clause"
+    "github.com/tarunvishwakarma1/gormicx/logger"
+    _ "github.com/tarunvishwakarma1/gormicx/drivers/postgres"
+)
+
+type User struct {
+    gormicx.Model
+    Name  string `gx:"column:name;not_null;size:100"`
+    Email string `gx:"column:email;unique;not_null;size:255"`
+    Age   int    `gx:"column:age"`
+}
+
+func main() {
+    ctx := context.Background()
+
+    db, err := gormicx.Open(
+        "postgres",
+        "postgres://user:pass@localhost:5432/mydb?sslmode=disable",
+        gormicx.WithMaxOpenConns(20),
+        gormicx.WithLogLevel(logger.Info),
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
+
+    if err := db.AutoMigrate(ctx, &User{}); err != nil {
+        log.Fatal(err)
+    }
+
+    alice := &User{Name: "Alice", Email: "alice@example.com", Age: 30}
+    if err := db.Create(ctx, alice); err != nil {
+        log.Fatal(err)
+    }
+    log.Printf("created user id=%d", alice.ID)
+
+    var adults []User
+    if err := db.Find(ctx, &User{}).
+        Where(clause.Gte("age", 18)).
+        OrderBy(clause.AscCol("name")).
+        Limit(50).
+        Find(&adults); err != nil {
+        log.Fatal(err)
+    }
+
+    var count int64
+    if err := db.Raw(ctx, "SELECT COUNT(*) FROM users WHERE age > $1", 18).Scan(&count); err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("adult users: %d\n", count)
+}
+```

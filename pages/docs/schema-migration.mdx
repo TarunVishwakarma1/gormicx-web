@@ -1,0 +1,42 @@
+# Schema Migration
+
+*Generate and manage database tables from Go struct definitions.*
+
+## AutoMigrate
+
+Creates tables for one or more models. Safe to call on startup — only creates tables that don't exist:
+
+```go
+err := db.AutoMigrate(ctx, &User{}, &Post{}, &Comment{})
+```
+
+## CreateTable
+
+Creates a single table:
+
+```go
+err := db.CreateTable(ctx, &User{})
+```
+
+## HasTable
+
+Check if a table exists:
+
+```go
+exists, err := db.HasTable(ctx, &User{})
+if exists {
+    // table is present
+}
+```
+
+## DropTable
+
+import { Callout } from 'nextra/components'
+
+<Callout type="warning">
+  `DropTable` permanently deletes the table and all its data. This cannot be undone.
+</Callout>
+
+```go
+err := db.DropTable(ctx, &OldModel{})
+```

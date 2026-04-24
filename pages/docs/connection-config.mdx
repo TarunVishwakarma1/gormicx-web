@@ -1,0 +1,54 @@
+# Connection & Config
+
+*Configure the connection pool, logging, and query behavior.*
+
+## Options Reference
+
+```go
+db, err := gormicx.Open("postgres", dsn,
+    gormicx.WithMaxOpenConns(50),              // max total connections
+    gormicx.WithMaxIdleConns(10),              // max idle connections
+    gormicx.WithConnMaxLifetime(30*time.Minute), // max connection age
+    gormicx.WithConnMaxIdleTime(5*time.Minute),  // max idle time
+    gormicx.WithLogLevel(logger.Debug),        // log level
+    gormicx.WithLogger(myLogger),              // custom logger
+    gormicx.WithPrepareStmt(true),             // prepared statement cache
+    gormicx.WithDryRun(true),                  // log queries, don't execute
+    gormicx.WithTablePrefix("app_"),           // prefix all table names
+    gormicx.WithSingularTable(true),           // disable pluralisation
+)
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `WithMaxOpenConns(n)` | driver default | Max open connections in pool |
+| `WithMaxIdleConns(n)` | driver default | Max idle connections in pool |
+| `WithConnMaxLifetime(d)` | 0 (no limit) | Max age of a connection |
+| `WithConnMaxIdleTime(d)` | 0 (no limit) | Max idle time before close |
+| `WithLogLevel(l)` | `logger.Warn` | Minimum log level |
+| `WithLogger(l)` | built-in | Custom logger implementation |
+| `WithPrepareStmt(b)` | `false` | Cache prepared statements |
+| `WithDryRun(b)` | `false` | Log queries without executing |
+| `WithTablePrefix(s)` | `""` | Prefix added to all table names |
+| `WithSingularTable(b)` | `false` | Use singular table names |
+
+## MustOpen
+
+Panics on error — useful in `main()` init:
+
+```go
+db := gormicx.MustOpen("postgres", dsn, gormicx.WithMaxOpenConns(20))
+```
+
+## Connection Pool Stats
+
+```go
+stats := db.Stats()
+fmt.Printf(
+    "open=%d idle=%d in_use=%d wait_count=%d\n",
+    stats.OpenConns,
+    stats.IdleConns,
+    stats.InUseConns,
+    stats.WaitCount,
+)
+```

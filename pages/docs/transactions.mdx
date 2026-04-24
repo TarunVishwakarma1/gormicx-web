@@ -1,0 +1,44 @@
+# Transactions
+
+*ACID transactions for SQL drivers: PostgreSQL, MySQL, CockroachDB, Snowflake. MongoDB and Cassandra return `ErrUnsupported`.*
+
+## Basic Transaction
+
+```go
+err := db.Tx(ctx, func(tx *gormicx.Tx) error {
+    if err := tx.Create(ctx, &Order{UserID: 1, Total: 99.99}); err != nil {
+        return err // automatic ROLLBACK
+    }
+    if _, err := tx.Find(ctx, &Inventory{}).
+        Where(clause.Eq("id", 1)).
+        Set(map[string]any{"stock": gormicx.Expr("stock - 1")}); err != nil {
+        return err // automatic ROLLBACK
+    }
+    return nil // COMMIT
+})
+```
+
+Returning any non-nil error triggers `ROLLBACK`. Returning `nil` triggers `COMMIT`.
+
+## Panic Recovery
+
+Panics inside the callback are caught, `ROLLBACK` is called, then the panic is re-raised:
+
+```go
+err := db.Tx(ctx, func(tx *gormicx.Tx) error {
+    tx.Create(ctx, &Order{UserID: 1})
+    panic("something went wrong") // rollback called before re-panic
+    return nil
+})
+```
+
+## Unsupported Drivers
+
+```go
+err := db.Tx(ctx, func(tx *gormicx.Tx) error {
+    return nil
+})
+if errors.Is(err, gormicx.ErrUnsupported) {
+    // driver does not support transactions
+}
+```

@@ -1,0 +1,45 @@
+# Hooks
+
+*Run logic before or after database operations. Two levels: engine-wide (all models) and model-level (per struct).*
+
+## Available Hook Types
+
+`BeforeCreate` · `AfterCreate` · `BeforeUpdate` · `AfterUpdate` · `BeforeDelete` · `AfterDelete` · `BeforeFind` · `AfterFind`
+
+## Engine-Level Hooks
+
+Applied to all operations across all models:
+
+```go
+db.RegisterHook(gormicx.BeforeCreate, func(ctx context.Context, model any) error {
+    if u, ok := model.(*User); ok {
+        u.CreatedAt = time.Now()
+    }
+    return nil
+})
+
+db.RegisterHook(gormicx.AfterCreate, func(ctx context.Context, model any) error {
+    log.Printf("created: %+v", model)
+    return nil
+})
+```
+
+## Model-Level Hooks
+
+Implement hook methods directly on your struct:
+
+```go
+func (u *User) BeforeCreate(ctx context.Context) error {
+    u.Email = strings.ToLower(u.Email)
+    return nil
+}
+
+func (u *User) AfterCreate(ctx context.Context) error {
+    log.Printf("user %d created", u.ID)
+    return nil
+}
+```
+
+## Execution Order
+
+Model-level hooks run **before** engine-level hooks. A non-nil error return aborts the operation.

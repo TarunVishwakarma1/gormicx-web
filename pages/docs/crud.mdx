@@ -1,0 +1,56 @@
+# CRUD
+
+*Create, read, update, and delete records.*
+
+## Create
+
+```go
+user := &User{Name: "Alice", Email: "alice@example.com", Age: 30}
+if err := db.Create(ctx, user); err != nil {
+    log.Fatal(err)
+}
+// user.ID is populated after insert
+```
+
+## Find Many
+
+```go
+var users []User
+err := db.Find(ctx, &User{}).
+    Where(clause.Gt("age", 18)).
+    OrderBy(clause.AscCol("name")).
+    Limit(20).
+    Offset(0).
+    Find(&users)
+```
+
+## Find One
+
+```go
+var u User
+err := db.Find(ctx, &User{}).
+    Where(clause.Eq("email", "alice@example.com")).
+    First(&u)
+
+if errors.Is(err, gormicx.ErrRecordNotFound) {
+    // no record matched
+}
+```
+
+## Update
+
+```go
+n, err := db.Find(ctx, &User{}).
+    Where(clause.Eq("id", user.ID)).
+    Set(map[string]any{"name": "Alice Smith", "age": 31})
+// n = rows affected
+```
+
+## Delete
+
+```go
+n, err := db.Find(ctx, &User{}).
+    Where(clause.Eq("id", user.ID)).
+    Delete()
+// Models embedding gormicx.Model are soft-deleted (DeletedAt set, row not removed)
+```

@@ -1,0 +1,75 @@
+# Models
+
+*Define your data structures using Go structs with `gx` struct tags.*
+
+## Embedding `gormicx.Model`
+
+```go
+type Post struct {
+    gormicx.Model          // provides: ID, CreatedAt, UpdatedAt, DeletedAt
+    Title   string `gx:"column:title;not_null;size:500"`
+    Body    string `gx:"column:body"`
+    UserID  uint   `gx:"column:user_id;index"`
+}
+```
+
+`gormicx.Model` provides:
+
+| Field       | Type         | Description                            |
+|-------------|--------------|----------------------------------------|
+| `ID`        | `uint`       | Auto-increment primary key             |
+| `CreatedAt` | `time.Time`  | Set on first insert                    |
+| `UpdatedAt` | `time.Time`  | Updated on every save                  |
+| `DeletedAt` | `*time.Time` | `nil` = active, non-nil = soft-deleted |
+
+## Custom Primary Key
+
+```go
+type Product struct {
+    SKU   string  `gx:"primaryKey;column:sku"`
+    Name  string  `gx:"column:name;not_null"`
+    Price float64 `gx:"column:price"`
+}
+```
+
+## Custom Table Name
+
+Implement `TableName() string` on your model:
+
+```go
+func (*User) TableName() string { return "app_users" }
+```
+
+## Struct Tag Reference (`gx:"..."`)
+
+Tags are semicolon-separated key or `key:value` pairs.
+
+| Tag                      | Effect                          |
+|--------------------------|---------------------------------|
+| `column:name`            | Override database column name   |
+| `primaryKey` / `pk`      | Mark as primary key             |
+| `autoIncrement` / `auto` | Auto-increment primary key      |
+| `not_null` / `notnull`   | NOT NULL constraint             |
+| `unique`                 | UNIQUE constraint               |
+| `index`                  | Create an index on this column  |
+| `size:N`                 | Column size e.g. `VARCHAR(255)` |
+| `precision:N`            | Decimal precision               |
+| `default`                | Column has a default value      |
+| `-`                      | Ignore this field entirely      |
+
+## Naming Strategy
+
+By default gormicx converts Go struct names to `snake_case` table names (pluralised) and field names to `snake_case` column names.
+
+| Go struct  | Default table |
+|------------|---------------|
+| `User`     | `users`       |
+| `BlogPost` | `blog_posts`  |
+| `HTTPLog`  | `http_logs`   |
+
+Customise with options:
+
+```go
+gormicx.WithTablePrefix("app_")   // → app_users
+gormicx.WithSingularTable(true)   // → user (not users)
+```

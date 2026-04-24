@@ -1,0 +1,56 @@
+# Logging
+
+*Configure log verbosity and plug in a custom logger.*
+
+## Log Levels
+
+```go
+import "github.com/tarunvishwakarma1/gormicx/logger"
+
+gormicx.WithLogLevel(logger.Silent) // no output
+gormicx.WithLogLevel(logger.Error)  // errors only
+gormicx.WithLogLevel(logger.Warn)   // warnings + errors (default)
+gormicx.WithLogLevel(logger.Info)   // all queries
+gormicx.WithLogLevel(logger.Debug)  // all queries + args
+```
+
+## Custom Logger
+
+Implement the `logger.Logger` interface:
+
+```go
+type zapLogger struct{ z *zap.Logger }
+
+func (l *zapLogger) Log(ctx context.Context, level logger.Level, msg string, args ...any) {
+    l.z.Sugar().Infof(msg, args...)
+}
+
+func (l *zapLogger) LogQuery(ctx context.Context, query string, args []any, elapsed time.Duration, err error) {
+    if err != nil {
+        l.z.Error("query failed", zap.String("sql", query), zap.Error(err))
+        return
+    }
+    l.z.Debug("query", zap.String("sql", query), zap.Duration("elapsed", elapsed))
+}
+
+func (l *zapLogger) SetLevel(level logger.Level) {}
+func (l *zapLogger) GetLevel() logger.Level       { return logger.Debug }
+```
+
+Pass it via `WithLogger`:
+
+```go
+db, err := gormicx.Open("postgres", dsn,
+    gormicx.WithLogger(&zapLogger{z: zap.NewNop()}),
+)
+```
+
+## Dry-Run Mode
+
+Log queries without executing them — useful for auditing generated SQL:
+
+```go
+db, err := gormicx.Open("postgres", dsn,
+    gormicx.WithDryRun(true),
+)
+```

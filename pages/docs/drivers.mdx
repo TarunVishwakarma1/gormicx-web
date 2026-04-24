@@ -1,0 +1,95 @@
+# Drivers
+
+*Supported databases, DSN formats, and how to write a custom driver.*
+
+## Supported Databases
+
+| Database    | Driver package                                            | Identifier    |
+|-------------|-----------------------------------------------------------|---------------|
+| PostgreSQL  | `github.com/tarunvishwakarma1/gormicx/drivers/postgres`  | `"postgres"`  |
+| CockroachDB | `github.com/tarunvishwakarma1/gormicx/drivers/postgres`  | `"cockroach"` |
+| MySQL       | `github.com/tarunvishwakarma1/gormicx/drivers/mysql`     | `"mysql"`     |
+| MariaDB     | `github.com/tarunvishwakarma1/gormicx/drivers/mysql`     | `"mariadb"`   |
+| MongoDB     | `github.com/tarunvishwakarma1/gormicx/drivers/mongo`     | `"mongo"`     |
+| Cassandra   | `github.com/tarunvishwakarma1/gormicx/drivers/cassandra` | `"cassandra"` |
+| Snowflake   | `github.com/tarunvishwakarma1/gormicx/drivers/snowflake` | `"snowflake"` |
+
+## DSN Formats
+
+### PostgreSQL
+
+```
+postgres://user:password@localhost:5432/dbname?sslmode=disable
+```
+
+### CockroachDB
+
+```
+postgres://user:password@localhost:26257/dbname?sslmode=require
+```
+
+Use identifier `"cockroach"`:
+
+```go
+db, err := gormicx.Open("cockroach", dsn)
+```
+
+### MySQL / MariaDB
+
+```
+user:password@tcp(localhost:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+```
+
+### MongoDB
+
+```
+mongodb://user:password@localhost:27017/dbname
+```
+
+### Cassandra
+
+```
+host1,host2/keyspace?consistency=quorum
+```
+
+### Snowflake
+
+```
+user:password@account/dbname/schema?warehouse=WH&role=ROLE
+```
+
+## Writing a Custom Driver
+
+Implement the `driver.Driver` interface and register in `init()`:
+
+```go
+package mydriver
+
+import (
+    "context"
+    "github.com/tarunvishwakarma1/gormicx/clause"
+    "github.com/tarunvishwakarma1/gormicx/driver"
+    "github.com/tarunvishwakarma1/gormicx/schema"
+)
+
+type myDriver struct{}
+
+func (d *myDriver) Name() string                      { return "mydb" }
+func (d *myDriver) Open(dsn string) error             { return nil }
+func (d *myDriver) Close() error                      { return nil }
+func (d *myDriver) Ping(ctx context.Context) error    { return nil }
+func (d *myDriver) Stats() driver.Stats               { return driver.Stats{} }
+
+func (d *myDriver) Create(ctx context.Context, s *schema.Schema, records []any) error { return nil }
+func (d *myDriver) Find(ctx context.Context, s *schema.Schema, dest any, clauses clause.Clauses) error { return nil }
+func (d *myDriver) Update(ctx context.Context, s *schema.Schema, values map[string]any, clauses clause.Clauses) (int64, error) { return 0, nil }
+func (d *myDriver) Delete(ctx context.Context, s *schema.Schema, clauses clause.Clauses) (int64, error) { return 0, nil }
+func (d *myDriver) Raw(ctx context.Context, query string, args ...any) (driver.RawResult, error) { return nil, nil }
+func (d *myDriver) Migrate(ctx context.Context, models []any, ns schema.NamingStrategy) error { return nil }
+
+func init() {
+    driver.Register("mydb", func() driver.Driver { return &myDriver{} })
+}
+```
+
+Add transaction support by also implementing `driver.Transactor`.

@@ -1,0 +1,83 @@
+# Query Builder
+
+*Fluent, immutable query construction. Each method returns a new `*Query` — safe to share across goroutines.*
+
+## Basic Usage
+
+```go
+var users []User
+err := db.Find(ctx, &User{}).
+    Where(clause.And(
+        clause.Gt("age", 18),
+        clause.Like("name", "A%"),
+    )).
+    OrderBy(clause.AscCol("name"), clause.DescCol("age")).
+    Select("id", "name", "email").
+    GroupBy("role").
+    Limit(10).
+    Offset(20).
+    Find(&users)
+```
+
+## Where Conditions
+
+```go
+clause.Eq("col", val)         // col = val
+clause.Ne("col", val)         // col != val
+clause.Gt("col", val)         // col > val
+clause.Gte("col", val)        // col >= val
+clause.Lt("col", val)         // col < val
+clause.Lte("col", val)        // col <= val
+clause.In("col", 1, 2, 3)     // col IN (1, 2, 3)
+clause.NotIn("col", 1, 2)     // col NOT IN (1, 2)
+clause.Like("col", "%foo%")   // col LIKE '%foo%'
+clause.IsNull("col")          // col IS NULL
+clause.IsNotNull("col")       // col IS NOT NULL
+clause.Between("col", lo, hi) // col BETWEEN lo AND hi
+```
+
+## Logical Grouping
+
+```go
+clause.And(cond1, cond2)     // (cond1 AND cond2)
+clause.Or(cond1, cond2)      // (cond1 OR cond2)
+clause.Not(clause.And(...))  // NOT (...)
+```
+
+## SQL JOINs
+
+```go
+type OrderWithUser struct {
+    OrderID int
+    Name    string
+    Total   float64
+}
+
+var results []OrderWithUser
+err := db.Find(ctx, &Order{}).
+    Join(clause.InnerJoin, "users", clause.And(
+        clause.Eq("orders.user_id", "users.id"),
+    ), "u").
+    Select("orders.id", "u.name", "orders.total").
+    Find(&results)
+```
+
+## Count
+
+```go
+count, err := db.Find(ctx, &User{}).
+    Where(clause.Gt("age", 18)).
+    Count()
+```
+
+## Raw Queries
+
+```go
+// Scan into struct
+var u User
+err := db.Raw(ctx, "SELECT * FROM users WHERE id = $1", 42).Scan(&u)
+
+// Scan scalar
+var count int64
+err = db.Raw(ctx, "SELECT COUNT(*) FROM users").Scan(&count)
+```

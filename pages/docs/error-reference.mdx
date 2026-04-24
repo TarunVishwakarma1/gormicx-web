@@ -1,0 +1,27 @@
+# Error Reference
+
+*All sentinel errors exported by gormicx. Use `errors.Is` for comparison.*
+
+```go
+import "errors"
+
+err := db.Find(ctx, &User{}).First(&user)
+if errors.Is(err, gormicx.ErrRecordNotFound) {
+    // handle not found
+}
+```
+
+## Sentinel Errors
+
+| Error | When raised |
+|-------|-------------|
+| `ErrRecordNotFound` | `First()` finds no matching rows |
+| `ErrDuplicateKey` | Unique constraint violation |
+| `ErrInvalidModel` | Non-pointer or non-struct passed as model |
+| `ErrMissingPK` | Operation requires a primary key but none is defined |
+| `ErrAlreadyClosed` | `db.Close()` called more than once |
+| `ErrTxAlreadyDone` | Transaction used after commit or rollback |
+| `ErrNilContext` | `nil` context passed to any operation |
+| `ErrEmptyBatch` | Empty slice passed to `CreateBatch` or `DeleteBatch` |
+| `ErrUnsupported` | Operation not supported by the driver (e.g. transactions on MongoDB) |
+| `ErrPoolExhausted` | Connection pool full and request timed out |
